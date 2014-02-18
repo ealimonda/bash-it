@@ -72,20 +72,30 @@ function prompt_setter() {
 PROMPT_COMMAND=prompt_setter
 
 git_prompt_status() {
-  local git_status_output
-  git_status_output=$(git status 2> /dev/null )
-  if [ -n "$(echo $git_status_output | grep 'Changes not staged')" ]; then
+  SCM_GIT_AHEAD=''
+  SCM_GIT_BEHIND=''
+  SCM_GIT_STASH=''
+  local git_status_output=$(git status -bs --porcelain 2> /dev/null )
+  local git_status_branch=$(grep ^# <<< "${git_status_output}")
+  git_status_output=$(grep -v ^# <<< "${git_status_output}")
+  if [[ $(grep '^.[MADRCU]' <<< "${git_status_output}") ]]; then # Unstaged
     git_status="${bold_red}$(scm_prompt_info) ${SCM_DIRTY_CHAR}"
-  elif [ -n "$(echo $git_status_output | grep 'Changes to be committed')" ]; then
+  elif [[ $(grep '^[MADRCU] ' <<< "${git_status_output}") ]]; then # uncommitted
     git_status="${bold_yellow}$(scm_prompt_info) ^"
-  elif [ -n "$(echo $git_status_output | grep 'Untracked files')" ]; then
+  elif [[ $(grep '^\?\?' <<< "${git_status_output}") ]]; then # untracked
     git_status="${bold_cyan}$(scm_prompt_info) +"
-  elif [ -n "$(echo $git_status_output | grep 'nothing to commit')" ]; then
+  elif [[ ! $(grep '^.' <<< "${git_status_output}") ]]; then # nothing to commit
     git_status="${bold_green}$(scm_prompt_info) ${green}${SCM_CLEAN_CHAR}"
   else
     git_status="$(scm_prompt_info)"
   fi
-  echo "$git_status${normal}"
+  local ahead_re='.+ahead ([0-9]+).+'
+  local behind_re='.+behind ([0-9]+).+'
+  [[ "${git_status_branch}" =~ ${ahead_re} ]] && SCM_GIT_AHEAD=" a:${SCM_GIT_AHEAD_CHAR}${BASH_REMATCH[1]}"
+  [[ "${git_status_branch}" =~ ${behind_re} ]] && SCM_GIT_BEHIND=" b:${SCM_GIT_BEHIND_CHAR}${BASH_REMATCH[1]}"
+  local stash_count="$(git stash list | wc -l | tr -d ' ')"
+  [[ "${stash_count}" -gt 0 ]] && SCM_GIT_STASH=" {${stash_count}}"
+  echo "$git_status${SCM_GIT_AHEAD}${SCM_GIT_BEHIND}${SCM_GIT_STASH}${normal}"
 }
 
 function svn_prompt_info {
