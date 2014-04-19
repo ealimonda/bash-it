@@ -138,7 +138,7 @@ function usage ()
 
 if [ ! -e $BASH_IT/plugins/enabled/todo.plugin.bash ]; then
 # if user has installed todo plugin, skip this...
-    function t ()
+    function todo ()
     {
         about 'one thing todo'
         param 'if not set, display todo item'
