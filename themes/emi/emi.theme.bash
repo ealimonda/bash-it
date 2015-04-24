@@ -30,14 +30,6 @@ SCM_THEME_PROMPT_CLEAN=" ${green}${SCM_CLEAN_CHAR}${normal}"
 SCM_THEME_PROMPT_DIRTY=" ${bold_red}${SCM_DIRTY_CHAR}${normal}"
 SCM_THEME_PROMPT_PREFIX=""
 SCM_THEME_PROMPT_SUFFIX=""
-case "$(id -u)" in
-  0)
-    my_user_color="${light_red}"
-    ;;
-  *)
-    my_user_color="${green}"
-    ;;
-esac
 
 export MYSQL_PS1="(\u@\h) [\d]> "
 
@@ -84,6 +76,18 @@ function prompt_setter() {
   #[ -n "$PREPS1" ] && PREPS1="$PREPS1 "
 
   #PS1="${LASTSTATUS}${normal}[${PREPS1}$(emi_scm_prompt)$(battery_charge)${normal}] ${my_user_color}\u@\h ${bold_blue}\w${normal} ${blue}\$${normal} "
+  case "$(id -u)" in
+    0)
+      my_user_color="${light_red}"
+      ;;
+    *)
+      if sudo -n uptime 2>&1 | grep -q "load"; then
+        my_user_color="${yellow}"
+      else
+        my_user_color="${green}"
+      fi
+      ;;
+  esac
   PS1="${LASTSTATUS}${normal}[${PREPS1}$(emi_scm_prompt)${normal}$(rbenv_version_prompt)] ${my_user_color}\u@\h ${bold_blue}\w${normal} ${blue}\$${normal} "
 }
 
