@@ -55,6 +55,17 @@ function rbenv_version_prompt {
   fi
 }
 
+if [[ `uname` =~ "CYGWIN_NT" ]]; then
+  function prompt_check_sudo() {
+    return -1
+  }
+else
+  function prompt_check_sudo() {
+    sudo -n uptime 2>&1 | grep -q "load"
+    return $?
+  }
+fi
+
 function prompt_setter() {
   # Save history
   #history -a
@@ -81,7 +92,7 @@ function prompt_setter() {
       my_user_color="${light_red}"
       ;;
     *)
-      if sudo -n uptime 2>&1 | grep -q "load"; then
+      if prompt_check_sudo; then
         my_user_color="${yellow}"
       else
         my_user_color="${green}"
